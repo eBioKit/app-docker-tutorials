@@ -1,0 +1,9 @@
+{
+	"service":"tutorials",
+	"version":"1.0",
+	"title":"eBioKit tutorials",
+	"description":"Various bioinformatics tutorials.",
+	"categories":"bioinformatics,elearning,tutorials",
+	"website":"http://ebiokit.eu/",
+	"dockers" : "bitnami/moodle:3,bitnami/mariadb:10.3,busybox"
+}

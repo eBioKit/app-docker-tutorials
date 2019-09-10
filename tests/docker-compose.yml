@@ -1,0 +1,61 @@
+############################################################
+# Launcher for Wordpress container for the eBioKit
+# This is a template, the following values must be replaced:
+#   - instance1, name for the instance
+#   - ${DATA_LOCATION}, parent directory for data DATA_LOCATION
+#   - ${INSTANCE_PORT_1}, port number for the instance (port 80)
+#   - ${INSTANCE_PORT_2}, port number for the instance (port 443)
+#   - ${SITE_NAME}, name for the web site
+#   - ${ADMIN_USER}, the name for admin user
+#   - ${ADMIN_PASS}, password for admin user
+#   - ${ADMIN_EMAIL}, email for admin user
+#   - ${MARIADB_ROOT_PASSWORD}, password for the MariaDB server
+############################################################
+
+version: '2'
+services:
+
+    instance1-moodle:
+      image: bitnami/moodle
+      container_name: instance1-moodle
+      environment:
+        - MOODLE_SITENAME=${SITE_NAME}
+        - MOODLE_USERNAME=${ADMIN_USER}
+        - MOODLE_EMAIL=${ADMIN_EMAIL}
+        - MOODLE_PASSWORD=${ADMIN_PASS}
+        - MOODLE_DATABASE_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      links:
+        - instance1-mariadb:mariadb
+      depends_on:
+        - instance1-mariadb
+      ports:
+        - ${INSTANCE_PORT_1}:80
+        - ${INSTANCE_PORT_2}:443
+
+    instance1-fix-mariadb-owner:
+      image: bitnami/mariadb:10.3
+      user: root
+      command: chown -R 1001:1001 /bitnami
+      depends_on:
+        - instance1-moodle-data
+      volumes_from:
+        - instance1-moodle-data
+
+    instance1-mariadb:
+      image: bitnami/mariadb:10.3
+      container_name: instance1-mariadb
+      environment:
+        - MARIADB_DATABASE=bitnami_moodle
+        - MARIADB_USER=bn_moodle
+        - MARIADB_PASSWORD=${MARIADB_ROOT_PASSWORD}
+        - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      depends_on:
+        - instance1-fix-mariadb-owner
+      volumes_from:
+        - instance1-moodle-data
+
+    instance1-moodle-data:
+      image: busybox
+      container_name: instance1-moodle-data
+      volumes:
+        - ${DATA_LOCATION}/instance1-data/mysql:/bitnami

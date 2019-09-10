@@ -1,0 +1,59 @@
+############################################################
+# Launcher for Wordpress container for the eBioKit
+# This is a template, the following values must be replaced:
+#   - $${INSTANCE_NAME}, name for the instance
+#   - ${DATA_LOCATION}, parent directory for data DATA_LOCATION
+#   - ${INSTANCE_PORT_1}, port number for the instance (port 80)
+#   - ${SITE_NAME}, name for the web site
+#   - ${ADMIN_USER}, the name for admin user
+#   - ${ADMIN_PASS}, password for admin user
+#   - ${ADMIN_EMAIL}, email for admin user
+#   - ${MARIADB_ROOT_PASSWORD}, password for the MariaDB server
+############################################################
+
+version: '2'
+services:
+
+    $${INSTANCE_NAME}-moodle:
+      image: bitnami/moodle:3
+      container_name: $${INSTANCE_NAME}-moodle
+      environment:
+        - MOODLE_SITENAME=${SITE_NAME}
+        - MOODLE_USERNAME=${ADMIN_USER}
+        - MOODLE_EMAIL=${ADMIN_EMAIL}
+        - MOODLE_PASSWORD=${ADMIN_PASS}
+        - MOODLE_DATABASE_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      links:
+        - $${INSTANCE_NAME}-mariadb:mariadb
+      depends_on:
+        - $${INSTANCE_NAME}-mariadb
+      ports:
+        - ${INSTANCE_PORT_1}:80
+
+    $${INSTANCE_NAME}-fix-mariadb-owner:
+      image: bitnami/mariadb:10.3
+      user: root
+      command: chown -R 1001:1001 /bitnami
+      depends_on:
+        - $${INSTANCE_NAME}-moodle-data
+      volumes_from:
+        - $${INSTANCE_NAME}-moodle-data
+
+    $${INSTANCE_NAME}-mariadb:
+      image: bitnami/mariadb:10.3
+      container_name: $${INSTANCE_NAME}-mariadb
+      environment:
+        - MARIADB_DATABASE=bitnami_moodle
+        - MARIADB_USER=bn_moodle
+        - MARIADB_PASSWORD=${MARIADB_ROOT_PASSWORD}
+        - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      depends_on:
+        - $${INSTANCE_NAME}-fix-mariadb-owner
+      volumes_from:
+        - $${INSTANCE_NAME}-moodle-data
+
+    $${INSTANCE_NAME}-moodle-data:
+      image: busybox
+      container_name: $${INSTANCE_NAME}-moodle-data
+      volumes:
+        - ${DATA_LOCATION}/$${INSTANCE_NAME}-data/mysql:/bitnami
